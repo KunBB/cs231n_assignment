@@ -146,11 +146,11 @@ class Solver(object):
 
         self._reset()
 
-
     def _reset(self):
         """
         Set up some book-keeping variables for optimization. Don't call this
         manually.
+        设置一些簿记变量以进行优化。 不要手动调用它。
         """
         # Set up some variables for book-keeping
         self.epoch = 0
@@ -161,16 +161,21 @@ class Solver(object):
         self.val_acc_history = []
 
         # Make a deep copy of the optim_config for each parameter
+        """
+        如果只采用Vanilla SGD的话，很简单，所有params共享一个learning rate参数。但是，
+        如果采用其他的方法，每一个param在更新时，都有与自己以前状态相关的参数，如momentum，
+        dx的滑动平均等等，所以要为每一个param维护一个属于自己的config。
+        """
         self.optim_configs = {}
         for p in self.model.params:
             d = {k: v for k, v in self.optim_config.items()}
             self.optim_configs[p] = d
 
-
     def _step(self):
         """
         Make a single gradient update. This is called by train() and should not
         be called manually.
+        进行单个渐变更新。 这由train（）调用，不应手动调用。
         """
         # Make a minibatch of training data
         num_train = self.X_train.shape[0]
@@ -190,28 +195,27 @@ class Solver(object):
             self.model.params[p] = next_w
             self.optim_configs[p] = next_config
 
-
     def _save_checkpoint(self):
-        if self.checkpoint_name is None: return
+        if self.checkpoint_name is None:
+            return
         checkpoint = {
-          'model': self.model,
-          'update_rule': self.update_rule,
-          'lr_decay': self.lr_decay,
-          'optim_config': self.optim_config,
-          'batch_size': self.batch_size,
-          'num_train_samples': self.num_train_samples,
-          'num_val_samples': self.num_val_samples,
-          'epoch': self.epoch,
-          'loss_history': self.loss_history,
-          'train_acc_history': self.train_acc_history,
-          'val_acc_history': self.val_acc_history,
+            'model': self.model,
+            'update_rule': self.update_rule,
+            'lr_decay': self.lr_decay,
+            'optim_config': self.optim_config,
+            'batch_size': self.batch_size,
+            'num_train_samples': self.num_train_samples,
+            'num_val_samples': self.num_val_samples,
+            'epoch': self.epoch,
+            'loss_history': self.loss_history,
+            'train_acc_history': self.train_acc_history,
+            'val_acc_history': self.val_acc_history,
         }
         filename = '%s_epoch_%d.pkl' % (self.checkpoint_name, self.epoch)
         if self.verbose:
             print('Saving checkpoint to "%s"' % filename)
         with open(filename, 'wb') as f:
             pickle.dump(checkpoint, f)
-
 
     def check_accuracy(self, X, y, num_samples=None, batch_size=100):
         """
@@ -253,7 +257,6 @@ class Solver(object):
 
         return acc
 
-
     def train(self):
         """
         Run optimization to train the model.
@@ -268,7 +271,7 @@ class Solver(object):
             # Maybe print training loss
             if self.verbose and t % self.print_every == 0:
                 print('(Iteration %d / %d) loss: %f' % (
-                       t + 1, num_iterations, self.loss_history[-1]))
+                    t + 1, num_iterations, self.loss_history[-1]))
 
             # At the end of every epoch, increment the epoch counter and decay
             # the learning rate.
@@ -284,16 +287,16 @@ class Solver(object):
             last_it = (t == num_iterations - 1)
             if first_it or last_it or epoch_end:
                 train_acc = self.check_accuracy(self.X_train, self.y_train,
-                    num_samples=self.num_train_samples)
+                                                num_samples=self.num_train_samples)
                 val_acc = self.check_accuracy(self.X_val, self.y_val,
-                    num_samples=self.num_val_samples)
+                                              num_samples=self.num_val_samples)
                 self.train_acc_history.append(train_acc)
                 self.val_acc_history.append(val_acc)
                 self._save_checkpoint()
 
                 if self.verbose:
                     print('(Epoch %d / %d) train acc: %f; val_acc: %f' % (
-                           self.epoch, self.num_epochs, train_acc, val_acc))
+                        self.epoch, self.num_epochs, train_acc, val_acc))
 
                 # Keep track of the best model
                 if val_acc > self.best_val_acc:

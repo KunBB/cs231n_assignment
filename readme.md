@@ -1,2 +1,2 @@
-CS231n Spring 2017 Homework
+CS231n Spring 2018 Homework
 ==========================

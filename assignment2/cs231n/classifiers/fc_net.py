@@ -300,9 +300,14 @@ class FullyConnectedNet(object):
             else:
                 out[i + 1], cache_relu[i] = relu_forward(out_aff[i])
 
+            if self.use_dropout:
+                out[i + 1], cache_drop[i] = dropout_forward(
+                    out[i + 1], self.dropout_param)
+
         w, b = self.params['W' + str(self.num_layers)
                            ], self.params['b' + str(self.num_layers)]
-        scores, cache = affine_forward(out[self.num_layers - 1], w, b)
+        scores, cache = affine_forward(
+            out[self.num_layers - 1], w, b)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -332,10 +337,14 @@ class FullyConnectedNet(object):
                 np.sum(np.square(self.params['W' + str(i + 1)]))
         loss = data_loss + reg_loss
 
-        dout, dbn, drelu, ddrop = {}, {}, {}, {}
+        dout, dbn, drelu = {}, {}, {}
         dout[self.num_layers - 1], grads['W' + str(self.num_layers)], grads['b' + str(
             self.num_layers)] = affine_backward(dscores, cache)
         for i in range(self.num_layers - 1):
+            if self.use_dropout:
+                dout[self.num_layers - 1 - i] = dropout_backward(
+                    dout[self.num_layers - 1 - i], cache_drop[self.num_layers - 2 - i])
+
             drelu[self.num_layers - 2 - i] = relu_backward(
                 dout[self.num_layers - 1 - i], cache_relu[self.num_layers - 2 - i])
 
